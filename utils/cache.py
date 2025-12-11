@@ -57,12 +57,16 @@ def init_cache(allow_nonexist=True):
         assert os.path.exists(cache_path), f"{cache_path} does not exist"
     
     if os.path.exists(cache_path):
-        if cache_format == "pickle":
-            with open(cache_path, 'rb') as f:
-                global_cache = pickle.load(f)
-        elif cache_format == "json":
-            with open(cache_path, 'r') as f:
-                global_cache = json.load(f)
+        try:
+            if cache_format == "pickle":
+                with open(cache_path, 'rb') as f:
+                    global_cache = pickle.load(f)
+            elif cache_format == "json":
+                with open(cache_path, 'r') as f:
+                    global_cache = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load cache file {cache_path}: {e}")
+            global_cache = {}
     else:
         global_cache = {}
 
@@ -85,17 +89,31 @@ def get_cache(key):
     return None
     
 def add_cache(key, value):
-    global cache_path
+    global cache_path, global_cache
     
     # Ensure cache is initialized
     if not cache_path:
         cache_path = _get_default_cache_path()
         print(f"Initializing cache at: {cache_path}")
+        # Load existing cache if file exists
+        if os.path.exists(cache_path):
+            if cache_format == "json":
+                with open(cache_path, 'r') as f:
+                    global_cache = json.load(f)
+            elif cache_format == "pickle":
+                with open(cache_path, 'rb') as f:
+                    global_cache = pickle.load(f)
     
     # Ensure cache directory exists
     cache_dir = os.path.dirname(cache_path)
     if cache_dir and not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
+    
+    # Initialize key in cache if not exists
+    if key not in global_cache:
+        global_cache[key] = []
+    if key not in global_cache_index:
+        global_cache_index[key] = 0
     
     global_cache_index[key] += 1
     global_cache[key].append(value)
