@@ -81,7 +81,8 @@ def get_layout(prompt, llm_kwargs, suffix=""):
     done = False
     attempts = 0
     while not done:
-        if "gpt" in model:
+        # Use chat completions API for GPT models and Doubao models
+        if "gpt" in model or "doubao" in model.lower():
             r = requests.post(f'{api_base}/chat/completions', json={
                 "model": model,
                 "messages": [{"role": "user", "content": get_full_prompt(template, prompt, suffix).strip()}],
@@ -101,16 +102,16 @@ def get_layout(prompt, llm_kwargs, suffix=""):
         done = r.status_code == 200
 
         if not done:
-            print(r.json())
+            print(f"API Error (status {r.status_code}): {r.text[:500]}")
             attempts += 1
-        if attempts >= 3 and "gpt" in model:
-            print("Retrying after 1 minute")
-            time.sleep(60)
-        if attempts >= 5 and "gpt" in model:
+        if attempts >= 3:
+            print("Retrying after 10 seconds")
+            time.sleep(10)
+        if attempts >= 5:
             print("Exiting due to many non-successful attempts")
             exit()
 
-    if "gpt" in model:
+    if "gpt" in model or "doubao" in model.lower():
         response = r.json()['choices'][0]['message']['content']
     else:
         response = r.json()['choices'][0]['text']
