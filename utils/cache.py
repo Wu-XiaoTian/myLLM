@@ -21,10 +21,20 @@ def _get_default_cache_path():
     if cache_path:
         return cache_path
     
-    # Try to find cache directory
-    cache_dir = 'cache'
+    # Try to find cache directory - use absolute path for Colab
+    # Get the script directory
+    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    cache_dir = os.path.join(script_dir, 'cache')
+    
     if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+            print(f"Created cache directory: {cache_dir}")
+        except Exception as e:
+            print(f"Warning: Could not create cache directory {cache_dir}: {e}")
+            # Fallback to current directory
+            cache_dir = os.path.join(os.getcwd(), 'cache')
+            os.makedirs(cache_dir, exist_ok=True)
     
     # Return a default cache file path
     return os.path.join(cache_dir, 'cache_default.json')
@@ -44,17 +54,23 @@ def init_cache(allow_nonexist=True):
     if not cache_path:
         cache_path = _get_default_cache_path()
     
-    assert cache_path, "Need to set cache path"
+    if not cache_path:
+        raise ValueError("Cache path could not be initialized")
+    
+    print(f"Cache path: {cache_path}")
     
     # Ensure cache directory exists
     cache_dir = os.path.dirname(cache_path)
     if cache_dir and not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    
-    print(f"Cache path: {cache_path}")
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+            print(f"Created cache directory: {cache_dir}")
+        except Exception as e:
+            print(f"Warning: Could not create cache directory: {e}")
     
     if not allow_nonexist:
-        assert os.path.exists(cache_path), f"{cache_path} does not exist"
+        if not os.path.exists(cache_path):
+            raise FileNotFoundError(f"{cache_path} does not exist")
     
     if os.path.exists(cache_path):
         try:
@@ -64,10 +80,12 @@ def init_cache(allow_nonexist=True):
             elif cache_format == "json":
                 with open(cache_path, 'r') as f:
                     global_cache = json.load(f)
+            print(f"Loaded {len(global_cache)} cached entries")
         except Exception as e:
             print(f"Warning: Could not load cache file {cache_path}: {e}")
             global_cache = {}
     else:
+        print("Cache file does not exist yet, will be created on first use")
         global_cache = {}
 
 def get_cache(key):
@@ -97,17 +115,30 @@ def add_cache(key, value):
         print(f"Initializing cache at: {cache_path}")
         # Load existing cache if file exists
         if os.path.exists(cache_path):
-            if cache_format == "json":
-                with open(cache_path, 'r') as f:
-                    global_cache = json.load(f)
-            elif cache_format == "pickle":
-                with open(cache_path, 'rb') as f:
-                    global_cache = pickle.load(f)
+            try:
+                if cache_format == "json":
+                    with open(cache_path, 'r') as f:
+                        global_cache = json.load(f)
+                elif cache_format == "pickle":
+                    with open(cache_path, 'rb') as f:
+                        global_cache = pickle.load(f)
+            except Exception as e:
+                print(f"Warning: Could not load existing cache: {e}")
+                global_cache = {}
+    
+    # Double-check cache_path is not empty
+    if not cache_path:
+        raise ValueError("Cache path is not initialized properly")
     
     # Ensure cache directory exists
     cache_dir = os.path.dirname(cache_path)
     if cache_dir and not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+            print(f"Created cache directory: {cache_dir}")
+        except Exception as e:
+            print(f"Error creating cache directory: {e}")
+            raise
     
     # Initialize key in cache if not exists
     if key not in global_cache:
@@ -118,12 +149,16 @@ def add_cache(key, value):
     global_cache_index[key] += 1
     global_cache[key].append(value)
     
-    if cache_format == "pickle":
-        with open(cache_path, 'wb') as f:
-            pickle.dump(global_cache, f)
-    elif cache_format == "json":
-        with open(cache_path, 'w') as f:
-            json.dump(global_cache, f, indent=4)
+    try:
+        if cache_format == "pickle":
+            with open(cache_path, 'wb') as f:
+                pickle.dump(global_cache, f)
+        elif cache_format == "json":
+            with open(cache_path, 'w') as f:
+                json.dump(global_cache, f, indent=4)
+    except Exception as e:
+        print(f"Error writing cache file: {e}")
+        raise
     
     return value
     
