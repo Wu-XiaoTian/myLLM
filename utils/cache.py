@@ -4,6 +4,7 @@
 import os
 import pickle, json
 
+# Default cache path - will be set to cache/ directory if it exists
 cache_path = ''
 cache_format = 'json'
 
@@ -14,6 +15,20 @@ global_cache_index = {}
 # This is for export and debugging the queries
 cache_queries = {}
 
+def _get_default_cache_path():
+    """Get default cache path, creating directory if needed"""
+    global cache_path
+    if cache_path:
+        return cache_path
+    
+    # Try to find cache directory
+    cache_dir = 'cache'
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    
+    # Return a default cache file path
+    return os.path.join(cache_dir, 'cache_default.json')
+
 def reset_cache_access():
     global global_cache_index, cache_queries
     global_cache_index = {}
@@ -23,8 +38,18 @@ def values_accessed():
     return sum(global_cache_index.values())
 
 def init_cache(allow_nonexist=True):
-    global global_cache
+    global global_cache, cache_path
+    
+    # If cache_path is not set, use default
+    if not cache_path:
+        cache_path = _get_default_cache_path()
+    
     assert cache_path, "Need to set cache path"
+    
+    # Ensure cache directory exists
+    cache_dir = os.path.dirname(cache_path)
+    if cache_dir and not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
     
     print(f"Cache path: {cache_path}")
     
@@ -38,6 +63,8 @@ def init_cache(allow_nonexist=True):
         elif cache_format == "json":
             with open(cache_path, 'r') as f:
                 global_cache = json.load(f)
+    else:
+        global_cache = {}
 
 def get_cache(key):
     if key not in global_cache:
@@ -58,6 +85,18 @@ def get_cache(key):
     return None
     
 def add_cache(key, value):
+    global cache_path
+    
+    # Ensure cache is initialized
+    if not cache_path:
+        cache_path = _get_default_cache_path()
+        print(f"Initializing cache at: {cache_path}")
+    
+    # Ensure cache directory exists
+    cache_dir = os.path.dirname(cache_path)
+    if cache_dir and not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    
     global_cache_index[key] += 1
     global_cache[key].append(value)
     

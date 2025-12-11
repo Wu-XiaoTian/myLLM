@@ -3,7 +3,7 @@ import os
 import sys
 from prompt import templates, stop
 from easydict import EasyDict
-from utils.cache import get_cache, add_cache
+from utils.cache import get_cache, add_cache, init_cache
 from utils.parse import size, parse_input_with_negative, filter_boxes
 import traceback
 import time
@@ -47,6 +47,9 @@ def get_llm_kwargs(model, template_version):
     print(f"Using template: {template_version}")
 
     template = templates[template_version]
+    
+    # Initialize cache with default path if not already initialized
+    init_cache(allow_nonexist=True)
 
     if "vicuna" in model.lower() or "llama" in model.lower() or "freewilly" in model.lower() or "stablebeluga2" in model.lower() or "mistral" in model.lower() or "mixtral" in model.lower():
         api_base = "http://localhost:8000/v1"
