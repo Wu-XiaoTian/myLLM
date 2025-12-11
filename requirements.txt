@@ -1,0 +1,12 @@
+numpy
+scipy
+torch
+diffusers
+transformers
+opencv-python
+opencv-contrib-python
+inflect
+easydict
+accelerate
+gradio
+pydantic
