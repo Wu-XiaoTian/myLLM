@@ -38,13 +38,28 @@ def get_llm_kwargs(model, template_version):
         headers = {}
     elif "doubao" in model.lower():
         # Volcengine Ark (Doubao) configuration
-        from utils.api_key import api_key
+        import os
+        try:
+            from utils.api_key import api_key
+        except ImportError:
+            # Fallback for Colab or environments where utils is not in path
+            import sys
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from utils.api_key import api_key
+        
         api_base = "https://ark.cn-beijing.volces.com/api/v3"
         max_tokens = 900
         temperature = 0.25
         headers = {"Authorization": f"Bearer {api_key}"}
     else:
-        from utils.api_key import api_key
+        import os
+        try:
+            from utils.api_key import api_key
+        except ImportError:
+            # Fallback for Colab or environments where utils is not in path
+            import sys
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from utils.api_key import api_key
         
         api_base = "https://api.openai.com/v1"
         max_tokens = 900
