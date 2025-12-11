@@ -39,13 +39,19 @@ def get_llm_kwargs(model, template_version):
     elif "doubao" in model.lower():
         # Volcengine Ark (Doubao) configuration
         import os
-        try:
-            from utils.api_key import api_key
-        except ImportError:
-            # Fallback for Colab or environments where utils is not in path
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            from utils.api_key import api_key
+        
+        # Try to get API key from environment first, then from module
+        api_key = os.getenv('ARK_API_KEY')
+        if not api_key:
+            try:
+                from utils.api_key import api_key
+            except ImportError:
+                # Fallback: try relative import
+                try:
+                    from .api_key import api_key
+                except ImportError:
+                    # Last resort: use default key
+                    api_key = "29d9f392-5151-47e4-b1f6-c007d69f4ae9"
         
         api_base = "https://ark.cn-beijing.volces.com/api/v3"
         max_tokens = 900
@@ -53,13 +59,19 @@ def get_llm_kwargs(model, template_version):
         headers = {"Authorization": f"Bearer {api_key}"}
     else:
         import os
-        try:
-            from utils.api_key import api_key
-        except ImportError:
-            # Fallback for Colab or environments where utils is not in path
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            from utils.api_key import api_key
+        
+        # Try to get API key from environment first, then from module
+        api_key = os.getenv('ARK_API_KEY') or os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            try:
+                from utils.api_key import api_key
+            except ImportError:
+                # Fallback: try relative import
+                try:
+                    from .api_key import api_key
+                except ImportError:
+                    # Last resort: use default key
+                    api_key = "29d9f392-5151-47e4-b1f6-c007d69f4ae9"
         
         api_base = "https://api.openai.com/v1"
         max_tokens = 900
