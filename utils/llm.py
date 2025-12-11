@@ -6,7 +6,16 @@ from utils.cache import get_cache, add_cache
 from utils.parse import size, parse_input_with_negative, filter_boxes
 import traceback
 import time
-from utils.api_key import api_key as default_api_key
+
+# Import API key at module level with proper fallback handling
+try:
+    from utils.api_key import api_key as default_api_key
+except ImportError:
+    try:
+        from .api_key import api_key as default_api_key
+    except ImportError:
+        # If import fails, will use environment variable or hardcoded default
+        default_api_key = None
 
 model_names = ["vicuna", "vicuna-13b", "vicuna-13b-v1.3", "vicuna-33b-v1.3", "Llama-2-7b-hf", "Llama-2-13b-hf", "Llama-2-70b-hf", "FreeWilly2", "StableBeluga2", "gpt-3.5-turbo", "gpt-3.5", "gpt-4", "text-davinci-003", "Mixtral-8x7B-Instruct-v0.1", "doubao-seed-1-6-251015"]
 
