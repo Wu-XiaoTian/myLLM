@@ -1,5 +1,6 @@
 import requests
 import os
+import sys
 from prompt import templates, stop
 from easydict import EasyDict
 from utils.cache import get_cache, add_cache
@@ -7,15 +8,20 @@ from utils.parse import size, parse_input_with_negative, filter_boxes
 import traceback
 import time
 
-# Import API key at module level with proper fallback handling
+# Import API key with robust fallback
+default_api_key = None
 try:
     from utils.api_key import api_key as default_api_key
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     try:
-        from .api_key import api_key as default_api_key
-    except ImportError:
-        # If import fails, will use environment variable or hardcoded default
-        default_api_key = None
+        # Add current directory to path if needed
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+        from utils.api_key import api_key as default_api_key
+    except (ImportError, ModuleNotFoundError):
+        # Last resort: use environment variable or default
+        default_api_key = os.getenv('ARK_API_KEY', '29d9f392-5151-47e4-b1f6-c007d69f4ae9')
 
 model_names = ["vicuna", "vicuna-13b", "vicuna-13b-v1.3", "vicuna-33b-v1.3", "Llama-2-7b-hf", "Llama-2-13b-hf", "Llama-2-70b-hf", "FreeWilly2", "StableBeluga2", "gpt-3.5-turbo", "gpt-3.5", "gpt-4", "text-davinci-003", "Mixtral-8x7B-Instruct-v0.1", "doubao-seed-1-6-251015"]
 
