@@ -1,10 +1,12 @@
 import requests
+import os
 from prompt import templates, stop
 from easydict import EasyDict
 from utils.cache import get_cache, add_cache
 from utils.parse import size, parse_input_with_negative, filter_boxes
 import traceback
 import time
+from utils.api_key import api_key as default_api_key
 
 model_names = ["vicuna", "vicuna-13b", "vicuna-13b-v1.3", "vicuna-33b-v1.3", "Llama-2-7b-hf", "Llama-2-13b-hf", "Llama-2-70b-hf", "FreeWilly2", "StableBeluga2", "gpt-3.5-turbo", "gpt-3.5", "gpt-4", "text-davinci-003", "Mixtral-8x7B-Instruct-v0.1", "doubao-seed-1-6-251015"]
 
@@ -38,32 +40,14 @@ def get_llm_kwargs(model, template_version):
         headers = {}
     elif "doubao" in model.lower():
         # Volcengine Ark (Doubao) configuration
-        try:
-            from utils.api_key import api_key
-        except ImportError:
-            # Fallback: try relative import
-            try:
-                from .api_key import api_key
-            except ImportError:
-                # Last resort: use default key directly
-                import os
-                api_key = os.getenv('ARK_API_KEY', '29d9f392-5151-47e4-b1f6-c007d69f4ae9')
+        api_key = default_api_key or os.getenv('ARK_API_KEY', '29d9f392-5151-47e4-b1f6-c007d69f4ae9')
         
         api_base = "https://ark.cn-beijing.volces.com/api/v3"
         max_tokens = 900
         temperature = 0.25
         headers = {"Authorization": f"Bearer {api_key}"}
     else:
-        try:
-            from utils.api_key import api_key
-        except ImportError:
-            # Fallback: try relative import
-            try:
-                from .api_key import api_key
-            except ImportError:
-                # Last resort: use default key directly
-                import os
-                api_key = os.getenv('ARK_API_KEY') or os.getenv('OPENAI_API_KEY') or '29d9f392-5151-47e4-b1f6-c007d69f4ae9'
+        api_key = default_api_key or os.getenv('ARK_API_KEY') or os.getenv('OPENAI_API_KEY') or '29d9f392-5151-47e4-b1f6-c007d69f4ae9'
         
         api_base = "https://api.openai.com/v1"
         max_tokens = 900
