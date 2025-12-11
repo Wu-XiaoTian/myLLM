@@ -38,40 +38,32 @@ def get_llm_kwargs(model, template_version):
         headers = {}
     elif "doubao" in model.lower():
         # Volcengine Ark (Doubao) configuration
-        import os
-        
-        # Try to get API key from environment first, then from module
-        api_key = os.getenv('ARK_API_KEY')
-        if not api_key:
+        try:
+            from utils.api_key import api_key
+        except ImportError:
+            # Fallback: try relative import
             try:
-                from utils.api_key import api_key
+                from .api_key import api_key
             except ImportError:
-                # Fallback: try relative import
-                try:
-                    from .api_key import api_key
-                except ImportError:
-                    # Last resort: use default key
-                    api_key = "29d9f392-5151-47e4-b1f6-c007d69f4ae9"
+                # Last resort: use default key directly
+                import os
+                api_key = os.getenv('ARK_API_KEY', '29d9f392-5151-47e4-b1f6-c007d69f4ae9')
         
         api_base = "https://ark.cn-beijing.volces.com/api/v3"
         max_tokens = 900
         temperature = 0.25
         headers = {"Authorization": f"Bearer {api_key}"}
     else:
-        import os
-        
-        # Try to get API key from environment first, then from module
-        api_key = os.getenv('ARK_API_KEY') or os.getenv('OPENAI_API_KEY')
-        if not api_key:
+        try:
+            from utils.api_key import api_key
+        except ImportError:
+            # Fallback: try relative import
             try:
-                from utils.api_key import api_key
+                from .api_key import api_key
             except ImportError:
-                # Fallback: try relative import
-                try:
-                    from .api_key import api_key
-                except ImportError:
-                    # Last resort: use default key
-                    api_key = "29d9f392-5151-47e4-b1f6-c007d69f4ae9"
+                # Last resort: use default key directly
+                import os
+                api_key = os.getenv('ARK_API_KEY') or os.getenv('OPENAI_API_KEY') or '29d9f392-5151-47e4-b1f6-c007d69f4ae9'
         
         api_base = "https://api.openai.com/v1"
         max_tokens = 900
