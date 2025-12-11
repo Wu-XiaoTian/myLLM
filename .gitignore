@@ -162,7 +162,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-api_key.py
+# Note: api_key.py is now tracked in git with a default API key
+# Sensitive keys should be set via ARK_API_KEY environment variable
 *_ignored*
 
 img_generations
